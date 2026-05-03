@@ -79,8 +79,17 @@ else
   echo "  ⚠ header-logo.svg no encontrado — el logo del header SVG no cambiará"
 fi
 
-echo "==> Texto 'Virtual Environment' en versioninfo widget"
+echo "==> Texto 'Virtual Environment' en versioninfo widget (static + runtime)"
+# Static initial render
 sed -i "s|html: 'Virtual Environment'|html: 'Console'|g" "$PVEMANAGER_JS"
+# Runtime update tras API /version — sobreescribe el static, hay que matarlo aquí también
+sed -i "s|ui.update('Virtual Environment ' + version)|ui.update('Console')|g" "$PVEMANAGER_JS"
+sed -i "s|ui.update('Virtual Environment')|ui.update('Console')|g" "$PVEMANAGER_JS"
+# Verificar
+if grep -q "Virtual Environment" "$PVEMANAGER_JS"; then
+  echo "  ⚠ aún quedan referencias a 'Virtual Environment' (no esperado)"
+  grep -n "Virtual Environment" "$PVEMANAGER_JS" | head -3
+fi
 
 echo "==> Title de la pestaña"
 sed -i 's|<title>[^<]*</title>|<title>Rocket Operations · Console</title>|g' "$PVEMANAGER_HTML"
