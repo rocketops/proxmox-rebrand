@@ -23,6 +23,7 @@ PVEMANAGER_JS="/usr/share/pve-manager/js/pvemanagerlib.js"
 PVEMANAGER_HTML="/usr/share/pve-manager/index.html.tpl"
 PVEMANAGER_LOGO="/usr/share/pve-manager/images/logo-128.png"
 PVEMANAGER_HEADER_LOGO="/usr/share/pve-manager/images/proxmox_logo.png"
+PWT_HEADER_LOGO_SVG="/usr/share/javascript/proxmox-widget-toolkit/images/proxmox_logo.svg"
 PROXMOX_LIB_JS="/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js"
 PVE_CSS="/usr/share/pve-manager/css/ext6-pve.css"
 
@@ -54,24 +55,32 @@ rollback_all() {
 trap '[[ $? -ne 0 ]] && rollback_all' EXIT
 
 echo "==> Backup (idempotente — sólo crea si no existen)"
-for f in "$PVEMANAGER_JS" "$PVEMANAGER_HTML" "$PVEMANAGER_LOGO" "$PVEMANAGER_HEADER_LOGO" "$PROXMOX_LIB_JS" "$PVE_CSS"; do
+for f in "$PVEMANAGER_JS" "$PVEMANAGER_HTML" "$PVEMANAGER_LOGO" "$PVEMANAGER_HEADER_LOGO" "$PWT_HEADER_LOGO_SVG" "$PROXMOX_LIB_JS" "$PVE_CSS"; do
   backup_once "$f"
 done
 
 echo "==> Restore baseline antes de patchear (clean slate)"
-for f in "$PVEMANAGER_JS" "$PVEMANAGER_HTML" "$PVEMANAGER_LOGO" "$PVEMANAGER_HEADER_LOGO" "$PROXMOX_LIB_JS" "$PVE_CSS"; do
+for f in "$PVEMANAGER_JS" "$PVEMANAGER_HTML" "$PVEMANAGER_LOGO" "$PVEMANAGER_HEADER_LOGO" "$PWT_HEADER_LOGO_SVG" "$PROXMOX_LIB_JS" "$PVE_CSS"; do
   restore_baseline "$f"
 done
 
-echo "==> Logos (favicon + header)"
-# favicon (logo-128.png) puede ser SVG, los navegadores aceptan
+echo "==> Logos (favicon + headers PNG y SVG)"
+# favicon (logo-128.png) puede ser SVG
 cp "$BRAND_DIR/logo.svg" "$PVEMANAGER_LOGO"
-# header logo (proxmox_logo.png) DEBE ser PNG real 172x30
+# header logo PNG legacy
 if [[ -f "$BRAND_DIR/header-logo.png" ]]; then
   cp "$BRAND_DIR/header-logo.png" "$PVEMANAGER_HEADER_LOGO"
-else
-  echo "  ⚠ header-logo.png no encontrado en $BRAND_DIR — el logo del header no cambiará"
 fi
+# header logo SVG (Proxmox 9.x usa este — PMX.image.LogoSVG)
+if [[ -f "$BRAND_DIR/header-logo.svg" ]]; then
+  cp "$BRAND_DIR/header-logo.svg" "$PWT_HEADER_LOGO_SVG"
+  echo "  ✓ SVG header logo (proxmox-widget-toolkit) reemplazado"
+else
+  echo "  ⚠ header-logo.svg no encontrado — el logo del header SVG no cambiará"
+fi
+
+echo "==> Texto 'Virtual Environment' en versioninfo widget"
+sed -i "s|html: 'Virtual Environment'|html: 'Console'|g" "$PVEMANAGER_JS"
 
 echo "==> Title de la pestaña"
 sed -i 's|<title>[^<]*</title>|<title>Rocket Operations · Console</title>|g' "$PVEMANAGER_HTML"
