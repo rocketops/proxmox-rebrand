@@ -12,7 +12,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 BRAND_DIR="/root/branding"
-BASE="https://raw.githubusercontent.com/rocketops/proxmox-rebrand/main"
+BASE="https://github.com/rocketops/proxmox-rebrand/raw/main"
 
 mkdir -p "$BRAND_DIR/assets"
 
